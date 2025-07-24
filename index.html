@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精霊の花祭り | LOL構成アナライザー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Shippori Mincho', serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            background-image: url('https://images.contentstack.io/v3/assets/blt731acb42bb3d1659/blt5dd889635791359c/5f29a8f926b6282855b88555/Spirit_Blossom_2020_Art_Splash_Optimized.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+        .backdrop-blur-md {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .bg-opacity-70 {
+            background-color: rgba(26, 26, 46, 0.7);
+        }
+        .champion-slot {
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        .champion-slot:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(173, 216, 230, 0.7), 0 0 10px rgba(255, 182, 193, 0.7);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+        .champion-slot.selected {
+             border-color: #fca5a5;
+             box-shadow: 0 0 25px #fca5a5;
+        }
+        .modal-bg {
+            background-color: rgba(15, 15, 25, 0.8);
+        }
+        .champion-grid-item {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .champion-grid-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #a7f3d0;
+        }
+        .btn {
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .btn-analyze {
+            background: linear-gradient(45deg, #818cf8, #f472b6);
+            box-shadow: 0 0 15px rgba(244, 114, 182, 0.5);
+        }
+        .btn-analyze:hover {
+            box-shadow: 0 0 25px rgba(244, 114, 182, 0.8);
+        }
+        .btn-reset {
+            background-color: rgba(107, 114, 128, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .btn-reset:hover {
+             background-color: rgba(107, 114, 128, 0.7);
+             box-shadow: 0 0 15px rgba(173, 216, 230, 0.4);
+        }
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: #f472b6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .analysis-section h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f9a8d4;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #f9a8d4;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <main class="w-full max-w-6xl mx-auto backdrop-blur-md bg-opacity-70 rounded-2xl shadow-2xl p-6 md:p-10 border border-white/20">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300">精霊の花祭り</h1>
+            <h2 class="text-xl md:text-2xl mt-2 text-white/90">LOLチーム構成アナライザー</h2>
+        </header>
+
+        <!-- Champion Selection -->
+        <section id="team-selection" class="mb-8">
+            <h3 class="text-2xl text-center mb-6 text-white/90">チャンピオンを選択してください</h3>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <!-- Slots for each role -->
+                <div id="top-lane" class="champion-slot relative bg-black/30 rounded-lg p-4 text-center cursor-pointer aspect-square flex flex-col items-center justify-center">
+                    <img id="top-img" src="https://placehold.co/128x128/334155/e2e8f0?text=?" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-transparent">
+                    <p class="font-bold text-lg text-white/80">トップ</p>
+                    <p id="top-name" class="text-sm text-white/60 h-5"></p>
+                </div>
+                <div id="jungle" class="champion-slot relative bg-black/30 rounded-lg p-4 text-center cursor-pointer aspect-square flex flex-col items-center justify-center">
+                    <img id="jungle-img" src="https://placehold.co/128x128/334155/e2e8f0?text=?" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-transparent">
+                    <p class="font-bold text-lg text-white/80">ジャングル</p>
+                    <p id="jungle-name" class="text-sm text-white/60 h-5"></p>
+                </div>
+                <div id="mid-lane" class="champion-slot relative bg-black/30 rounded-lg p-4 text-center cursor-pointer aspect-square flex flex-col items-center justify-center">
+                    <img id="mid-img" src="https://placehold.co/128x128/334155/e2e8f0?text=?" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-transparent">
+                    <p class="font-bold text-lg text-white/80">ミッド</p>
+                    <p id="mid-name" class="text-sm text-white/60 h-5"></p>
+                </div>
+                <div id="adc" class="champion-slot relative bg-black/30 rounded-lg p-4 text-center cursor-pointer aspect-square flex flex-col items-center justify-center">
+                    <img id="adc-img" src="https://placehold.co/128x128/334155/e2e8f0?text=?" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-transparent">
+                    <p class="font-bold text-lg text-white/80">ボット</p>
+                    <p id="adc-name" class="text-sm text-white/60 h-5"></p>
+                </div>
+                <div id="support" class="champion-slot relative bg-black/30 rounded-lg p-4 text-center cursor-pointer aspect-square flex flex-col items-center justify-center">
+                    <img id="support-img" src="https://placehold.co/128x128/334155/e2e8f0?text=?" class="w-24 h-24 rounded-full object-cover mb-2 border-2 border-transparent">
+                    <p class="font-bold text-lg text-white/80">サポート</p>
+                    <p id="support-name" class="text-sm text-white/60 h-5"></p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Action Buttons -->
+        <div class="text-center my-8 flex justify-center items-center gap-4">
+            <button id="analyze-btn" class="btn btn-analyze text-white font-bold py-3 px-8 rounded-full text-lg">
+                構成を分析
+            </button>
+            <button id="reset-btn" class="btn btn-reset text-white font-bold py-3 px-8 rounded-full text-lg">
+                リセット
+            </button>
+        </div>
+
+        <!-- Analysis Result -->
+        <section id="analysis-result" class="hidden">
+            <div id="loader-container" class="flex justify-center items-center my-8 hidden">
+                <div class="loader"></div>
+                <p class="ml-4 text-lg">AIが構成を分析中...</p>
+            </div>
+            <div id="error-message" class="hidden text-center bg-red-500/30 p-4 rounded-lg text-red-300"></div>
+            <div id="result-content" class="bg-black/30 p-6 rounded-lg space-y-8">
+                <!-- Content will be injected here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Champion Selection Modal -->
+    <div id="champion-modal" class="fixed inset-0 modal-bg backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-slate-800/90 w-full max-w-4xl h-full max-h-[80vh] rounded-lg shadow-xl flex flex-col border border-white/20">
+            <div class="p-4 border-b border-white/20 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white/90">チャンピオンを選択</h3>
+                <input type="text" id="champion-search" placeholder="チャンピオンを検索..." class="bg-slate-700 text-white/80 rounded px-3 py-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-pink-400">
+                <button id="close-modal" class="text-white/80 text-2xl">×</button>
+            </div>
+            <div id="champion-grid" class="p-4 grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-4 overflow-y-auto">
+                <div class="col-span-full flex justify-center items-center">
+                    <div class="loader"></div>
+                    <p class="ml-4">チャンピオンデータを読み込み中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- STATE ---
+        let champions = [];
+        let selectedChampions = { top: null, jungle: null, mid: null, adc: null, support: null };
+        let currentRole = null;
+        let lolVersion = '14.14.1'; 
+
+        // --- DOM ELEMENTS ---
+        const modal = document.getElementById('champion-modal');
+        const championGrid = document.getElementById('champion-grid');
+        const closeModalBtn = document.getElementById('close-modal');
+        const searchInput = document.getElementById('champion-search');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const analysisResultSection = document.getElementById('analysis-result');
+        const loader = document.getElementById('loader-container');
+        const resultContent = document.getElementById('result-content');
+        const errorMessage = document.getElementById('error-message');
+        const roles = {
+            'top-lane': 'top', 'jungle': 'jungle', 'mid-lane': 'mid', 'adc': 'adc', 'support': 'support'
+        };
+
+        // --- FUNCTIONS ---
+
+        // AIからのレポート形式のテキストを解析してJSONオブジェクトに変換する関数
+        function parseAnalysisText(text) {
+            const data = {
+                team_strengths: [],
+                team_weaknesses: [],
+                win_conditions: [],
+                strategy_summary: "",
+                lane_analysis: { top: "", jungle: "", mid: "", bot: "" }
+            };
+
+            // Helper to extract content between two section headers
+            const getSectionContent = (fullText, startKeyword, endKeyword) => {
+                const startRegex = new RegExp(`\\*\\*.*?${startKeyword}[^\\*]*\\*\\*`);
+                const match = fullText.match(startRegex);
+                if (!match) return "";
+
+                const startIndex = match.index + match[0].length;
+                let endIndex = fullText.length;
+
+                if (endKeyword) {
+                    const endRegex = new RegExp(`\\*\\*.*?${endKeyword}[^\\*]*\\*\\*`);
+                    // 検索開始位置をstartIndex以降に限定
+                    const endMatch = fullText.substring(startIndex).match(endRegex);
+                    if (endMatch) {
+                        endIndex = startIndex + endMatch.index;
+                    }
+                }
+                
+                // 最後の結論部分を除外
+                const conclusionIndex = fullText.indexOf("この構成は、", startIndex);
+                if (conclusionIndex !== -1 && conclusionIndex < endIndex) {
+                    endIndex = conclusionIndex;
+                }
+
+                return fullText.substring(startIndex, endIndex).trim();
+            };
+            
+            // 各セクションのテキストを抽出
+            data.strategy_summary = getSectionContent(text, '構成の概要', '構成の強み');
+            const strengthsText = getSectionContent(text, '構成の強み', '構成の弱み');
+            const weaknessesText = getSectionContent(text, '構成の弱み', '勝利への道筋');
+            const winConditionsText = getSectionContent(text, '勝利への道筋', 'レーン別解説');
+            const lanesText = getSectionContent(text, 'レーン別解説', null);
+            
+            // 箇条書きをパースするヘルパー関数
+            const parseList = (rawText) => {
+                if (!rawText) return [];
+                return rawText.split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.startsWith('-'))
+                    .map(item => item.replace(/^- \s*(\*\*.*?\*\*:\s*)?/, '').trim())
+                    .filter(Boolean);
+            };
+
+            data.team_strengths = parseList(strengthsText);
+            data.team_weaknesses = parseList(weaknessesText);
+            data.win_conditions = parseList(winConditionsText);
+            
+            // レーン別解説をパースするヘルパー関数
+            const getLaneContent = (rawText, laneKeyword) => {
+                const regex = new RegExp(`-\\s*\\*\\*${laneKeyword}(?:\\s*\\(.*?\\))?:\\*\\*\\s*([\\s\\S]*?)(?=(?:\\n-\\s*\\*\\*)|$)`);
+                const match = rawText.match(regex);
+                return match ? match[1].trim() : "";
+            };
+            
+            if(lanesText) {
+                data.lane_analysis.top = getLaneContent(lanesText, "トップレーン");
+                data.lane_analysis.jungle = getLaneContent(lanesText, "ジャングル");
+                data.lane_analysis.mid = getLaneContent(lanesText, "ミッドレーン");
+                data.lane_analysis.bot = getLaneContent(lanesText, "ボットレーン");
+            }
+            
+            return data;
+        }
+
+        async function loadAllChampions() {
+            try {
+                const versionResponse = await fetch('https://ddragon.leagueoflegends.com/api/versions.json');
+                if (!versionResponse.ok) throw new Error('Failed to fetch LoL versions.');
+                const versions = await versionResponse.json();
+                lolVersion = versions[0];
+                const url = `https://ddragon.leagueoflegends.com/cdn/${lolVersion}/data/ja_JP/champion.json`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                champions = Object.values(data.data).map(champ => ({
+                    id: champ.id,
+                    name: champ.name,
+                    image: `https://ddragon.leagueoflegends.com/cdn/${lolVersion}/img/champion/${champ.id}.png`
+                }));
+                champions.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+            } catch (error) {
+                console.error('Failed to load champion data:', error);
+                championGrid.innerHTML = '<p class="text-red-400 col-span-full text-center">チャンピオンデータの読み込みに失敗しました。ページを再読み込みしてください。</p>';
+            }
+        }
+
+        function populateChampionGrid(champsToDisplay) {
+            championGrid.innerHTML = '';
+            if (champsToDisplay.length === 0) {
+                championGrid.innerHTML = '<p class="text-white/70 col-span-full text-center">該当するチャンピオンが見つかりません。</p>';
+                return;
+            }
+            champsToDisplay.forEach(champ => {
+                const champElement = document.createElement('div');
+                champElement.className = 'champion-grid-item text-center cursor-pointer';
+                champElement.innerHTML = `
+                    <img src="${champ.image}" alt="${champ.name}" class="w-full rounded-md border-2 border-transparent hover:border-pink-300" loading="lazy">
+                    <p class="text-xs mt-1 text-white/70">${champ.name}</p>
+                `;
+                champElement.addEventListener('click', () => selectChampion(champ));
+                championGrid.appendChild(champElement);
+            });
+        }
+
+        function openModal(roleId) {
+            currentRole = roles[roleId];
+            if (champions.length > 0) {
+                 populateChampionGrid(champions);
+            }
+            modal.classList.remove('hidden');
+            searchInput.value = '';
+            searchInput.focus();
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+        }
+
+        function selectChampion(champion) {
+            selectedChampions[currentRole] = champion;
+            updateTeamSelectionUI();
+            closeModal();
+        }
+
+        function updateTeamSelectionUI() {
+            for (const role in selectedChampions) {
+                const champion = selectedChampions[role];
+                const roleKey = Object.keys(roles).find(key => roles[key] === role);
+                const imgElement = document.getElementById(`${role}-img`);
+                const nameElement = document.getElementById(`${role}-name`);
+                const slotElement = document.getElementById(roleKey);
+                if (champion) {
+                    imgElement.src = champion.image;
+                    imgElement.alt = champion.name;
+                    nameElement.textContent = champion.name;
+                    slotElement.classList.add('selected');
+                } else {
+                    imgElement.src = `https://placehold.co/128x128/334155/e2e8f0?text=?`;
+                    imgElement.alt = "未選択";
+                    nameElement.textContent = '';
+                    slotElement.classList.remove('selected');
+                }
+            }
+        }
+        
+        function filterChampions() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const filteredChamps = champions.filter(champ => 
+                champ.name.toLowerCase().includes(searchTerm) || 
+                champ.id.toLowerCase().includes(searchTerm)
+            );
+            populateChampionGrid(filteredChamps);
+        }
+        
+        function resetSelection() {
+            selectedChampions = { top: null, jungle: null, mid: null, adc: null, support: null };
+            updateTeamSelectionUI();
+            analysisResultSection.classList.add('hidden');
+            resultContent.innerHTML = '';
+            errorMessage.textContent = '';
+            errorMessage.classList.add('hidden');
+        }
+
+        function displayError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            resultContent.classList.add('hidden');
+        }
+
+        function displayAnalysis(analysis) {
+            const defaultLaneAnalysis = {
+                top: "分析データがありません。",
+                jungle: "分析データがありません。",
+                mid: "分析データがありません。",
+                bot: "分析データがありません。"
+            };
+            const laneAnalysis = { ...defaultLaneAnalysis, ...analysis.lane_analysis };
+            
+            const { team_strengths, team_weaknesses, win_conditions, strategy_summary } = analysis;
+            const formatList = (items = []) => items.map(item => `<li class="mb-2 pl-4 border-l-2 border-pink-400/50">${item}</li>`).join('');
+
+            resultContent.innerHTML = `
+                <div class="analysis-section">
+                    <h3>構成の概要</h3>
+                    <p class="text-white/80">${(strategy_summary || "データがありません。").replace(/\n/g, '<br>')}</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="analysis-section">
+                        <h3>構成の強み</h3>
+                        <ul class="list-none text-white/80">${formatList(team_strengths)}</ul>
+                    </div>
+                    <div class="analysis-section">
+                        <h3>構成の弱み</h3>
+                        <ul class="list-none text-white/80">${formatList(team_weaknesses)}</ul>
+                    </div>
+                </div>
+                <div class="analysis-section">
+                    <h3>勝利への道筋</h3>
+                    <ul class="list-none text-white/80">${formatList(win_conditions)}</ul>
+                </div>
+                <div class="analysis-section">
+                    <h3>レーン別解説</h3>
+                    <div class="space-y-4 text-white/80">
+                        <div><strong class="text-purple-300">トップレーン:</strong><p class="pl-2 mt-1">${laneAnalysis.top.replace(/\n/g, '<br>')}</p></div>
+                        <div><strong class="text-purple-300">ジャングル:</strong><p class="pl-2 mt-1">${laneAnalysis.jungle.replace(/\n/g, '<br>')}</p></div>
+                        <div><strong class="text-purple-300">ミッドレーン:</strong><p class="pl-2 mt-1">${laneAnalysis.mid.replace(/\n/g, '<br>')}</p></div>
+                        <div><strong class="text-purple-300">ボットレーン (ADC & サポート):</strong><p class="pl-2 mt-1">${laneAnalysis.bot.replace(/\n/g, '<br>')}</p></div>
+                    </div>
+                </div>
+            `;
+            resultContent.classList.remove('hidden');
+        }
+
+        async function handleAnalysis() {
+            if (Object.values(selectedChampions).some(c => c === null)) {
+                displayError("すべてのロールのチャンピオンを選択してください。");
+                analysisResultSection.classList.remove('hidden');
+                return;
+            }
+
+            analysisResultSection.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            resultContent.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            
+            const team = {
+                Top: selectedChampions.top.name,
+                Jungle: selectedChampions.jungle.name,
+                Mid: selectedChampions.mid.name,
+                ADC: selectedChampions.adc.name,
+                Support: selectedChampions.support.name
+            };
+            
+            try {
+                const payload = {
+                    team: team
+                };
+
+                const apiUrl = `/.netlify/functions/analyze`;
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Error Body:", errorBody);
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                const analysisText = result.analysis;
+                console.log("AIからの生データ:", analysisText);
+
+                const analysisData = parseAnalysisText(analysisText);
+                console.log("解析後のJSON:", JSON.stringify(analysisData, null, 2));
+                displayAnalysis(analysisData);
+
+            } catch (error) {
+                console.error("Analysis failed:", error);
+                displayError(`分析に失敗しました。時間をおいて再試行してください。(${error.message})`);
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        Object.keys(roles).forEach(roleId => {
+            document.getElementById(roleId).addEventListener('click', () => openModal(roleId));
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        searchInput.addEventListener('input', filterChampions);
+        analyzeBtn.addEventListener('click', handleAnalysis);
+        resetBtn.addEventListener('click', resetSelection);
+        
+        /**
+         * アプリケーションを初期化します。
+         */
+        async function initialize() {
+            updateTeamSelectionUI();
+            await loadAllChampions();
+            populateChampionGrid(champions);
+        }
+
+        // --- INITIALIZATION ---
+        initialize();
+    </script>
+</body>
+</html>
