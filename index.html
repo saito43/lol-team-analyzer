@@ -406,19 +406,11 @@
 回答は、上記の項目名をそのまま使い、箇条書きの部分は「- 」から始めてください。
 `;
 
-            try {
-                const payload = {
-                    contents: [{ role: "user", parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        "temperature": 0.7,
-                        "topP": 1.0,
-                        "topK": 32,
-                        "maxOutputTokens": 2048,
-                    }
-                };
+           try {
+                const payload = { team: team };
 
-                const apiKey = "GOOGLE_API_KEY"; // ← ここにあなたの実際のAPIキーを貼り付けてください
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+                // 呼び出し先はGoogleではなく、自分たちのサーバー関数
+                const apiUrl = `/.netlify/functions/analyze`;
                 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
